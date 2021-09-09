@@ -3,10 +3,38 @@ const cors = require("cors");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const yup = require("yup");
+const fetch = require("node-fetch");
 const { nanoid } = require("nanoid");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const HASURA_OPERATION = `
+mutation insertUrl($slug: String, $url: String) {
+  insert_urls_one(object: {slug: $slug, url: $url}) {
+    id
+    slug
+    url
+  }
+}
+`;
+
+// execute the parent operation in Hasura
+const execute = async (variables) => {
+  const fetchResponse = await fetch(
+    "https://shawtly-url.hasura.app/v1/graphql",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        query: HASURA_OPERATION,
+        variables,
+      }),
+    }
+  );
+  const data = await fetchResponse.json();
+  console.log("DEBUG: ", data);
+  return data;
+};
 
 app.use(helmet());
 app.use(morgan("tiny"));
@@ -39,7 +67,18 @@ app.post("/url", async (req, res, next) => {
     }
     slug = slug.toLowerCase();
     await schema.validate({ slug, url });
-    return res.json({ slug, url });
+    const { data, errors } = await execute({ slug, url });
+
+    // if Hasura operation errors, then throw error
+    if (errors) {
+      return res.status(400).json(errors[0]);
+    }
+
+    // success
+    return res.json({
+      ...data.insert_urls_one,
+    });
+    // return res.json({ slug, url });
   } catch (error) {
     next(error);
   }

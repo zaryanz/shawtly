@@ -1,10 +1,17 @@
-const express = require("express");
-const cors = require("cors");
-const morgan = require("morgan");
-const helmet = require("helmet");
-const yup = require("yup");
-const fetch = require("node-fetch");
-const { nanoid } = require("nanoid");
+// const express = require("express");
+// const cors = require("cors");
+// const morgan = require("morgan");
+// const helmet = require("helmet");
+// const yup = require("yup");
+// const fetch = require("node-fetch");
+// const { nanoid } = require("nanoid");
+import express from "express";
+import fetch from "node-fetch";
+import cors from "cors";
+import morgan from "morgan";
+import helmet from "helmet";
+import yup from "yup";
+import { nanoid } from "nanoid";
 
 const app = express();
 const PORT = process.env.PORT || 5000;

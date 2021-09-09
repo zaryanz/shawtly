@@ -31,7 +31,8 @@ app.get("/:id", (req, res) => {
 
 app.post("/url", async (req, res, next) => {
   // TODO: create a new short url
-  let { slug, url } = req.body;
+  let { arg } = req.body.input;
+  let { slug, url } = arg;
   try {
     if (!slug) {
       slug = nanoid(5);

@@ -96,13 +96,19 @@ app.get("/", (req, res) => {
 
 app.post("/find", async (req, res, next) => {
   let { slug } = req.body.input;
-  const exists = await findUrlBySlug({ slug });
-  const { urls } = exists.data;
-  if (exists.data.urls.length !== 0) {
-    return res.json({ urls: urls[0] });
-  } else {
-    next({ message: "slug not found" });
+  // const exists = await findUrlBySlug({ slug });
+  // const { urls } = exists.data;
+  const { data, errors } = await findUrlBySlug({ slug });
+
+  // if Hasura operation errors, then throw error
+  if (errors) {
+    return res.status(400).json(errors[0]);
   }
+
+  // success
+  return res.json({
+    ...data.urls,
+  });
 });
 
 app.post("/url", async (req, res, next) => {
@@ -116,7 +122,7 @@ app.post("/url", async (req, res, next) => {
       exists = await findUrlBySlug({ slug });
       if (exists.data.urls.length !== 0) {
         console.log("EXISTS", exists);
-        next({ message: "slug already exists" });
+        return next({ message: "slug already exists" });
       }
     }
     slug = slug.toLowerCase();

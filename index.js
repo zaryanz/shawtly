@@ -16,7 +16,38 @@ import { nanoid } from "nanoid";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const HASURA_OPERATION = `
+const HASURA_OPERATION_FIND = `
+query findUrlBySlug($slug: String) {
+  urls(where: {slug: {_eq: $slug}}) {
+    id
+    slug
+    url
+  }
+}
+`;
+
+// execute the parent operation in Hasura
+const findUrlBySlug = async (variables) => {
+  const fetchResponse = await fetch(
+    "https://shawtly-url.hasura.app/v1/graphql",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        query: HASURA_OPERATION_FIND,
+        variables,
+      }),
+      headers: {
+        "x-hasura-admin-secret":
+          "UYCuFbqd26kubdt34Zdm9XOtRWud4V1FiFNDCKaRVSK856NCUgBvpptYUGS1nNH9",
+      },
+    }
+  );
+  const data = await fetchResponse.json();
+  console.log("DEBUG: ", data);
+  return data;
+};
+
+const HASURA_OPERATION_ADD = `
 mutation insertUrl($slug: String, $url: String) {
   insert_urls_one(object: {slug: $slug, url: $url}) {
     id
@@ -26,14 +57,13 @@ mutation insertUrl($slug: String, $url: String) {
 }
 `;
 
-// execute the parent operation in Hasura
-const execute = async (variables) => {
+const addUrlToDb = async (variables) => {
   const fetchResponse = await fetch(
     "https://shawtly-url.hasura.app/v1/graphql",
     {
       method: "POST",
       body: JSON.stringify({
-        query: HASURA_OPERATION,
+        query: HASURA_OPERATION_ADD,
         variables,
       }),
       headers: {
@@ -64,31 +94,43 @@ app.get("/", (req, res) => {
   res.json({ message: "shawtly - shorten your urls" });
 });
 
-app.get("/:id", (req, res) => {
-  // TODO: redirect to url
+app.get("/find", async (req, res, next) => {
+  let { slug } = req.body.input;
+  const exists = await findUrlBySlug({ slug });
+  const { urls } = exists.data;
+  if (exists.data.urls.length !== 0) {
+    return res.json({ url: urls[0].url });
+  } else {
+    next({ message: "slug not found" });
+  }
 });
 
 app.post("/url", async (req, res, next) => {
-  // TODO: create a new short url
   let { arg } = req.body.input;
   let { slug, url } = arg;
+  let exists = undefined;
   try {
     if (!slug) {
       slug = nanoid(5);
+    } else {
+      exists = await findUrlBySlug({ slug });
     }
-    slug = slug.toLowerCase();
-    await schema.validate({ slug, url });
-    const { data, errors } = await execute({ slug, url });
+    if (exists.data.urls.length !== 0) {
+      console.log("EXISTS", exists);
+      next({ message: "slug already exists" });
+    } else {
+      slug = slug.toLowerCase();
+      await schema.validate({ slug, url });
+      const { data, errors } = await addUrlToDb({ slug, url });
 
-    // if Hasura operation errors, then throw error
-    if (errors) {
-      return res.status(400).json(errors[0]);
+      if (errors) {
+        return res.status(400).json(errors[0]);
+      }
+
+      return res.json({
+        ...data.insert_urls_one,
+      });
     }
-
-    // success
-    return res.json({
-      ...data.insert_urls_one,
-    });
     // return res.json({ slug, url });
   } catch (error) {
     next(error);

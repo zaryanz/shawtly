@@ -96,18 +96,18 @@ app.get("/", (req, res) => {
 
 app.post("/find", async (req, res, next) => {
   let { slug } = req.body.input;
-  // const exists = await findUrlBySlug({ slug });
-  // const { urls } = exists.data;
   const { data, errors } = await findUrlBySlug({ slug });
 
-  // if Hasura operation errors, then throw error
   if (errors) {
     return res.status(400).json(errors[0]);
   }
 
-  // success
+  if (data.urls.length === 0) {
+    return next({ message: "slug does not exist" });
+  }
+
   return res.json({
-    ...data.urls,
+    ...data.urls[0],
   });
 });
 

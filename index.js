@@ -36,6 +36,10 @@ const execute = async (variables) => {
         query: HASURA_OPERATION,
         variables,
       }),
+      headers: {
+        "x-hasura-admin-secret":
+          "UYCuFbqd26kubdt34Zdm9XOtRWud4V1FiFNDCKaRVSK856NCUgBvpptYUGS1nNH9",
+      },
     }
   );
   const data = await fetchResponse.json();

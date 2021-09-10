@@ -114,23 +114,22 @@ app.post("/url", async (req, res, next) => {
       slug = nanoid(5);
     } else {
       exists = await findUrlBySlug({ slug });
-    }
-    if (exists.data.urls.length !== 0) {
-      console.log("EXISTS", exists);
-      next({ message: "slug already exists" });
-    } else {
-      slug = slug.toLowerCase();
-      await schema.validate({ slug, url });
-      const { data, errors } = await addUrlToDb({ slug, url });
-
-      if (errors) {
-        return res.status(400).json(errors[0]);
+      if (exists.data.urls.length !== 0) {
+        console.log("EXISTS", exists);
+        next({ message: "slug already exists" });
       }
-
-      return res.json({
-        ...data.insert_urls_one,
-      });
     }
+    slug = slug.toLowerCase();
+    await schema.validate({ slug, url });
+    const { data, errors } = await addUrlToDb({ slug, url });
+
+    if (errors) {
+      return res.status(400).json(errors[0]);
+    }
+
+    return res.json({
+      ...data.insert_urls_one,
+    });
     // return res.json({ slug, url });
   } catch (error) {
     next(error);

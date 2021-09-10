@@ -94,7 +94,7 @@ app.get("/", (req, res) => {
   res.json({ message: "shawtly - shorten your urls" });
 });
 
-app.get("/find", async (req, res, next) => {
+app.post("/find", async (req, res, next) => {
   let { slug } = req.body.input;
   const exists = await findUrlBySlug({ slug });
   const { urls } = exists.data;

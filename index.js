@@ -1,10 +1,3 @@
-// const express = require("express");
-// const cors = require("cors");
-// const morgan = require("morgan");
-// const helmet = require("helmet");
-// const yup = require("yup");
-// const fetch = require("node-fetch");
-// const { nanoid } = require("nanoid");
 import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";

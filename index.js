@@ -99,7 +99,7 @@ app.post("/find", async (req, res, next) => {
   const exists = await findUrlBySlug({ slug });
   const { urls } = exists.data;
   if (exists.data.urls.length !== 0) {
-    return res.json({ url: urls[0].url });
+    return res.json({ urls: urls[0] });
   } else {
     next({ message: "slug not found" });
   }
